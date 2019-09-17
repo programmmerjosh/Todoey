@@ -8,20 +8,22 @@
 
 /* Begin PBXBuildFile section */
 		841CFDE2232FFAE4005571BD /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841CFDE1232FFAE4005571BD /* AppDelegate.swift */; };
-		841CFDE4232FFAE4005571BD /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841CFDE3232FFAE4005571BD /* ViewController.swift */; };
 		841CFDE7232FFAE4005571BD /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 841CFDE5232FFAE4005571BD /* Main.storyboard */; };
 		841CFDE9232FFAE6005571BD /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 841CFDE8232FFAE6005571BD /* Assets.xcassets */; };
 		841CFDEC232FFAE6005571BD /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 841CFDEA232FFAE6005571BD /* LaunchScreen.storyboard */; };
+		841CFDF5232FFBFC005571BD /* ToDoListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841CFDF3232FFBFC005571BD /* ToDoListViewController.swift */; };
+		841CFDF6232FFBFC005571BD /* ToDoListViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 841CFDF4232FFBFC005571BD /* ToDoListViewController.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		841CFDDE232FFAE4005571BD /* Todoey.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Todoey.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		841CFDE1232FFAE4005571BD /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		841CFDE3232FFAE4005571BD /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		841CFDE6232FFAE4005571BD /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		841CFDE8232FFAE6005571BD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		841CFDEB232FFAE6005571BD /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		841CFDED232FFAE6005571BD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		841CFDF3232FFBFC005571BD /* ToDoListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToDoListViewController.swift; sourceTree = "<group>"; };
+		841CFDF4232FFBFC005571BD /* ToDoListViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = ToDoListViewController.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,7 +57,8 @@
 			isa = PBXGroup;
 			children = (
 				841CFDE1232FFAE4005571BD /* AppDelegate.swift */,
-				841CFDE3232FFAE4005571BD /* ViewController.swift */,
+				841CFDF3232FFBFC005571BD /* ToDoListViewController.swift */,
+				841CFDF4232FFBFC005571BD /* ToDoListViewController.xib */,
 				841CFDE5232FFAE4005571BD /* Main.storyboard */,
 				841CFDE8232FFAE6005571BD /* Assets.xcassets */,
 				841CFDEA232FFAE6005571BD /* LaunchScreen.storyboard */,
@@ -122,6 +125,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				841CFDF6232FFBFC005571BD /* ToDoListViewController.xib in Resources */,
 				841CFDEC232FFAE6005571BD /* LaunchScreen.storyboard in Resources */,
 				841CFDE9232FFAE6005571BD /* Assets.xcassets in Resources */,
 				841CFDE7232FFAE4005571BD /* Main.storyboard in Resources */,
@@ -135,7 +139,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				841CFDE4232FFAE4005571BD /* ViewController.swift in Sources */,
+				841CFDF5232FFBFC005571BD /* ToDoListViewController.swift in Sources */,
 				841CFDE2232FFAE4005571BD /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
