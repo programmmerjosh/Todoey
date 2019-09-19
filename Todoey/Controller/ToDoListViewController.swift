@@ -7,15 +7,20 @@
 //
 
 import UIKit
+import CoreData
 
 class ToDoListViewController: UITableViewController {
     
     var itemArray    = [Item]()
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+    let context      = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    var selectedCategory: Category? {
+        didSet{
+            loadItems()
+        }
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        loadItems()
     }
 
     // MARK: - Table view data source
@@ -39,8 +44,7 @@ class ToDoListViewController: UITableViewController {
         
         tableView.deselectRow(at: indexPath, animated: true)
         
-        let item = itemArray[indexPath.row]
-        
+        let item     = itemArray[indexPath.row]
         item.checked = !item.checked
         
         saveItems()
@@ -53,10 +57,14 @@ class ToDoListViewController: UITableViewController {
         var myTextfield = UITextField()
         let alert       = UIAlertController(title: "Add Item", message: "Insert your new item here:", preferredStyle: .alert)
         let action      = UIAlertAction(title: "Add Item", style: .default) { (action) in
-                          let item = Item()
-                          item.name = myTextfield.text!
-                          self.itemArray.append(item)
-                          self.saveItems()
+        let item        = Item(context: self.context)
+            
+            item.name           = myTextfield.text!
+            item.checked        = false
+            item.parentCategory = self.selectedCategory
+            
+            self.itemArray.append(item)
+            self.saveItems()
         }
         
         alert.addTextField { (alertTextField) in
@@ -68,38 +76,54 @@ class ToDoListViewController: UITableViewController {
         present(alert, animated: true, completion: nil)
     }
     
-    // MARK: - Encoding and decoding methods
+    // MARK: - CoreData save & load
     
     func saveItems() {
-        let encoder = PropertyListEncoder()
-        
         do {
-            let data = try encoder.encode(self.itemArray)
-            try data.write(to: self.dataFilePath!)
+            try context.save()
         } catch {
-            print("Error encoding item array: \(error)")
+            print("Error saving items: \(error)")
         }
         tableView.reloadData()
     }
     
-    func loadItems() {
-        if let data = try? Data(contentsOf: dataFilePath!) {
-            let decoder = PropertyListDecoder()
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), searchPredicate: NSPredicate? = nil) {
+        
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        
+        if let additionalPredicate = searchPredicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
+        
+        do {
+            itemArray = try context.fetch(request)
+        } catch {
+            print("Load Items Error: \(error)")
+        }
+    }
+}
+
+// MARK: - Search Bar
+
+extension ToDoListViewController: UISearchBarDelegate {
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        let predicate                     = NSPredicate(format: "name CONTIANS[cd] %@", searchBar.text!)
+        request.sortDescriptors           = [NSSortDescriptor(key: "name", ascending: true)]
+        
+        loadItems(with: request, searchPredicate: predicate)
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {
+            loadItems()
             
-            do {
-                itemArray = try decoder.decode([Item].self, from: data)
-            } catch {
-                print("\(error)")
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
             }
         }
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
 }
