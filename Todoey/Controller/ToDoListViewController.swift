@@ -7,14 +7,16 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
 
 class ToDoListViewController: UITableViewController {
     
-    var itemArray    = [Item]()
-    let context      = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    let realm     = try! Realm()
+    var toDoItems: Results<Item>?
+    
     var selectedCategory: Category? {
         didSet{
+            // only once the category has been set, this loads the items linked to that category
             loadItems()
         }
     }
@@ -26,28 +28,37 @@ class ToDoListViewController: UITableViewController {
     // MARK: - Table view data source
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return itemArray.count
+        return toDoItems?.count ?? 1
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
-        let item = itemArray[indexPath.row]
         
-        cell.textLabel?.text = item.name
-        cell.accessoryType   = item.checked ? .checkmark : .none
-
+        // check if there are any items in the toDoItems and assign the values appropriately
+        if let item = toDoItems?[indexPath.row] {
+            cell.textLabel?.text = item.name
+            cell.accessoryType   = item.checked ? .checkmark : .none
+        } else {
+            cell.textLabel?.text = "No items added yet"
+        }
         return cell
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        tableView.deselectRow(at: indexPath, animated: true)
-        
-        let item     = itemArray[indexPath.row]
-        item.checked = !item.checked
-        
-        saveItems()
+        if let item = toDoItems?[indexPath.row] {
+            do {
+                try realm.write {
+                    // if I want to delete the item instead of check it: uncomment next line and comment out the uncommented line
+                    // realm.delete(item)
+                    item.checked = !item.checked
+                }
+            } catch {
+                print("Error saving the checked feature: \(error)")
+            }
+        }
+        tableView.reloadData()
     }
 
     // MARK: - Add button pressed
@@ -57,14 +68,20 @@ class ToDoListViewController: UITableViewController {
         var myTextfield = UITextField()
         let alert       = UIAlertController(title: "Add Item", message: "Insert your new item here:", preferredStyle: .alert)
         let action      = UIAlertAction(title: "Add Item", style: .default) { (action) in
-        let item        = Item(context: self.context)
             
-            item.name           = myTextfield.text!
-            item.checked        = false
-            item.parentCategory = self.selectedCategory
-            
-            self.itemArray.append(item)
-            self.saveItems()
+            if let currentCategory = self.selectedCategory {
+                do {
+                    try self.realm.write {
+                        let item  = Item()
+                        item.name = myTextfield.text!
+                        item.dateCreated = Date()
+                        currentCategory.items.append(item)
+                    }
+                } catch {
+                    print("error: \(error)")
+                }
+            }
+            self.tableView.reloadData()
         }
         
         alert.addTextField { (alertTextField) in
@@ -76,32 +93,12 @@ class ToDoListViewController: UITableViewController {
         present(alert, animated: true, completion: nil)
     }
     
-    // MARK: - CoreData save & load
+    // MARK: - Realm load
     
-    func saveItems() {
-        do {
-            try context.save()
-        } catch {
-            print("Error saving items: \(error)")
-        }
+    func loadItems() {
+        // setting the toDoItems in ascending order
+        toDoItems = selectedCategory?.items.sorted(byKeyPath: "name", ascending: true)
         tableView.reloadData()
-    }
-    
-    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), searchPredicate: NSPredicate? = nil) {
-        
-        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
-        
-        if let additionalPredicate = searchPredicate {
-            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
-        } else {
-            request.predicate = categoryPredicate
-        }
-        
-        do {
-            itemArray = try context.fetch(request)
-        } catch {
-            print("Load Items Error: \(error)")
-        }
     }
 }
 
@@ -110,14 +107,15 @@ class ToDoListViewController: UITableViewController {
 extension ToDoListViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         
-        let request: NSFetchRequest<Item> = Item.fetchRequest()
-        let predicate                     = NSPredicate(format: "name CONTIANS[cd] %@", searchBar.text!)
-        request.sortDescriptors           = [NSSortDescriptor(key: "name", ascending: true)]
-        
-        loadItems(with: request, searchPredicate: predicate)
+        // update the collection of results here by inserting a filtered version based on a predicate
+//        toDoItems = toDoItems?.filter("name CONTIANS[cd] %@", searchBar.text!).sorted(byKeyPath: "name", ascending: true)
+        toDoItems = toDoItems?.filter("name CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: true)
+        tableView.reloadData()
     }
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        
+        // if dismissing the searchbar (or emptying the search bar text), load up the items all over again
         if searchBar.text?.count == 0 {
             loadItems()
             

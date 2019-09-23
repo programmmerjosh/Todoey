@@ -7,12 +7,16 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
 
 class CategoryViewController: UITableViewController {
     
-    var categoryArray = [Category]()
-    let context       = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    // initialize a new access point to the Realm database
+    let realm = try! Realm()
+    // changed 'categories' from an array of category items to a new collection type 'Results'
+    // which is a collection of results that are category objects.
+    // it's also an optional for safety
+    var categories: Results<Category>?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -22,6 +26,7 @@ class CategoryViewController: UITableViewController {
     // MARK: - tableview delegate methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        // clicking on one of the cells, perfroms a segue that takes the user to the ToDoListViewController
         performSegue(withIdentifier: "goToItems", sender: self)
     }
     
@@ -29,17 +34,22 @@ class CategoryViewController: UITableViewController {
         
         let destinationVC = segue.destination as! ToDoListViewController
         
+        // setting the selectedCategory variable in the ToDoListViewController
         if let indexPath = tableView.indexPathForSelectedRow {
-            destinationVC.selectedCategory = categoryArray[indexPath.row]
+            destinationVC.selectedCategory = categories?[indexPath.row]
         }
     }
     
     // MARK: - data manipulation methods
     
-    func saveCategories() {
+    func save(category: Category) {
         
         do {
-            try context.save()
+            // commit any changes to the Realm
+            try realm.write {
+                // the only change is adding the new category to the Realm database
+                realm.add(category)
+            }
         } catch {
             print("Error saving: \(error)")
         }
@@ -47,28 +57,24 @@ class CategoryViewController: UITableViewController {
     }
 
     func loadCategories() {
-        
-        let request: NSFetchRequest<Category> = Category.fetchRequest()
-        
-        do {
-            categoryArray = try context.fetch(request)
-        } catch {
-            print("Error loading: \(error)")
-        }
+        // setup categories to look inside our Realm and fetch all the objects that belong to the category data type
+        categories = realm.objects(Category.self)
+        tableView.reloadData()
     }
 
     // MARK: - Table view data source
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return categoryArray.count
+        // returns the number of categories if there are any saved categories, otherwise, returns a default value of 1
+        return categories?.count ?? 1
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell     = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
-        let category = categoryArray[indexPath.row]
+        let category = categories?[indexPath.row].name ?? "No categories yet"
         
-        cell.textLabel?.text = category.name
+        cell.textLabel?.text = category
         
         return cell
     }
@@ -80,11 +86,10 @@ class CategoryViewController: UITableViewController {
         var myTextField = UITextField()
         let alert       = UIAlertController(title: "Add Category", message: "Add a new category:", preferredStyle: .alert)
         let action      = UIAlertAction(title: "Add Category", style: .default) { (action) in
-        let category    = Category(context: self.context)
+        let newCategory    = Category()
             
-            category.name = myTextField.text!
-            self.categoryArray.append(category)
-            self.saveCategories()
+            newCategory.name = myTextField.text!
+            self.save(category: newCategory)
         }
         
         alert.addTextField { (alertTextField) in
