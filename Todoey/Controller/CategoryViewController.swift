@@ -8,8 +8,9 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
-class CategoryViewController: UITableViewController {
+class CategoryViewController: SwipeTableViewController {
     
     // initialize a new access point to the Realm database
     let realm = try! Realm()
@@ -21,6 +22,8 @@ class CategoryViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         loadCategories()
+        
+        tableView.separatorStyle = .none
     }
     
     // MARK: - tableview delegate methods
@@ -61,6 +64,20 @@ class CategoryViewController: UITableViewController {
         categories = realm.objects(Category.self)
         tableView.reloadData()
     }
+    
+    // MARK: - Delete Data from swipe
+    override func updateModel(at indexPath: IndexPath) {
+        if let category = categories?[indexPath.row] {
+            do {
+                try realm.write {
+                    realm.delete(category)
+                }
+            } catch {
+                print("Error deleting category: \(error)")
+            }
+            tableView.reloadData()
+        }
+    }
 
     // MARK: - Table view data source
 
@@ -71,11 +88,18 @@ class CategoryViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell     = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
-        let category = categories?[indexPath.row].name ?? "No categories yet"
+        let cell        = super.tableView(tableView, cellForRowAt: indexPath)
         
-        cell.textLabel?.text = category
-        
+        if let category = categories?[indexPath.row] {
+            
+            guard let categoryColor   = UIColor(hexString: category.hexColor) else {fatalError()}
+            cell.backgroundColor      = categoryColor
+            cell.textLabel?.textColor = ContrastColorOf(categoryColor, returnFlat: true)
+            cell.textLabel?.text      = category.name
+        } else {
+            cell.textLabel?.text = "No category added yet"
+            cell.backgroundColor = UIColor.randomFlat
+        }
         return cell
     }
 
@@ -86,9 +110,10 @@ class CategoryViewController: UITableViewController {
         var myTextField = UITextField()
         let alert       = UIAlertController(title: "Add Category", message: "Add a new category:", preferredStyle: .alert)
         let action      = UIAlertAction(title: "Add Category", style: .default) { (action) in
-        let newCategory    = Category()
+        let newCategory = Category()
             
-            newCategory.name = myTextField.text!
+            newCategory.name     = myTextField.text!
+            newCategory.hexColor = UIColor.randomFlat.hexValue()
             self.save(category: newCategory)
         }
         
